@@ -6,8 +6,35 @@
 	<dict>
 		<key>C5 Maps.xcscheme_^#shared#^_</key>
 		<dict>
+			<key>isShown</key>
+			<true/>
 			<key>orderHint</key>
 			<integer>0</integer>
+		</dict>
+		<key>C5Maps.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
+	</dict>
+	<key>SuppressBuildableAutocreation</key>
+	<dict>
+		<key>FDA842062FD7758400BB8D67</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>FDA842172FD7758500BB8D67</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>FDA842212FD7758500BB8D67</key>
+		<dict>
+			<key>primary</key>
+			<true/>
 		</dict>
 	</dict>
 </dict>

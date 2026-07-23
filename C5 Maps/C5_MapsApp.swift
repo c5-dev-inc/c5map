@@ -10,8 +10,8 @@ import SwiftData
 
 @main
 struct C5_MapsApp: App {
-    @State private var isAuthenticated = false
-    @State private var hasSubscription = false
+    @StateObject private var authManager = AuthManager()
+    @StateObject private var iapManager = IAPManager.shared
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
@@ -28,21 +28,20 @@ struct C5_MapsApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if !isAuthenticated {
-                SignInView(
-                    onSignIn: {
-                        isAuthenticated = true
-                    }
-                )
-            } else if !hasSubscription {
-                UpgradePlanView(
-                    onComplete: {
-                        hasSubscription = true
-                    }
-                )
+            if !authManager.isAuthenticated {
+                SignInView(onSignIn: {
+                    // ✅ On sign in, just set authenticated
+                    authManager.isAuthenticated = true
+                    UserDefaults.standard.set(true, forKey: "isAuthenticated")
+                })
+                .environmentObject(authManager)
+                .environmentObject(iapManager)
             } else {
+                // ✅ GO STRAIGHT TO CONTENT VIEW
                 ContentView()
                     .modelContainer(sharedModelContainer)
+                    .environmentObject(authManager)
+                    .environmentObject(iapManager)
             }
         }
     }

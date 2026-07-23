@@ -1,0 +1,34 @@
+{
+  "products": [
+    {
+      "displayName": "Launch Plan",
+      "productId": "com.c5maps.launch",
+      "price": 99.00,
+      "type": "Non-Consumable"
+    },
+    {
+      "displayName": "Growth Monthly",
+      "productId": "com.c5maps.growth.monthly",
+      "price": 29.99,
+      "type": "Auto-Renewable Subscription"
+    },
+    {
+      "displayName": "Growth Yearly",
+      "productId": "com.c5maps.growth.yearly",
+      "price": 287.00,
+      "type": "Auto-Renewable Subscription"
+    },
+    {
+      "displayName": "Scale Monthly",
+      "productId": "com.c5maps.scale.monthly",
+      "price": 49.99,
+      "type": "Auto-Renewable Subscription"
+    },
+    {
+      "displayName": "Scale Yearly",
+      "productId": "com.c5maps.scale.yearly",
+      "price": 479.00,
+      "type": "Auto-Renewable Subscription"
+    }
+  ]
+}

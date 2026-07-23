@@ -10,6 +10,8 @@ class AuthManager: NSObject, ObservableObject {
     @Published var errorMessage: String?
     @Published var userEmail: String = ""
     @Published var userName: String = ""
+    @Published var userId: Int?
+    @Published var supabaseUserId: String?  // ✅ UUID for Stripe
     
     private var currentNonce: String?
     
@@ -22,6 +24,10 @@ class AuthManager: NSObject, ObservableObject {
         // Check if user has subscription from UserDefaults
         hasSubscription = UserDefaults.standard.bool(forKey: "hasActiveSubscription")
         isAuthenticated = UserDefaults.standard.bool(forKey: "isAuthenticated")
+        userId = UserDefaults.standard.integer(forKey: "userId")
+        supabaseUserId = UserDefaults.standard.string(forKey: "supabaseUserId")
+        userEmail = UserDefaults.standard.string(forKey: "userEmail") ?? ""
+        userName = UserDefaults.standard.string(forKey: "userName") ?? ""
         
         // Check for existing Apple ID credential
         let appleIDProvider = ASAuthorizationAppleIDProvider()
@@ -57,6 +63,109 @@ class AuthManager: NSObject, ObservableObject {
         authorizationController.performRequests()
     }
     
+    // MARK: - API Sign In
+    func signInWithAPI(appleUserId: String, email: String, name: String, completion: @escaping (Bool, String?) -> Void) {
+        guard let url = URL(string: "https://c5-dev.com/api/map/auth/apple") else {
+            completion(false, "Invalid API URL")
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: Any] = [
+            "appleUserId": appleUserId,
+            "email": email,
+            "name": name
+        ]
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        } catch {
+            completion(false, "Failed to encode request")
+            return
+        }
+        
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    completion(false, "Network error: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let data = data else {
+                    completion(false, "No data received from server")
+                    return
+                }
+                
+                // ✅ Print the raw response to debug
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("📱 RAW API RESPONSE:", jsonString)
+                }
+                
+                do {
+                    if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                       let success = json["success"] as? Bool,
+                       success == true,
+                       let userData = json["data"] as? [String: Any] {
+                        
+                        print("📱 userData keys:", userData.keys)
+                        
+                        // Store user data - Integer ID
+                        if let userId = userData["id"] as? Int {
+                            self?.userId = userId
+                            UserDefaults.standard.set(userId, forKey: "userId")
+                            print("✅ Saved userId:", userId)
+                        }
+                        
+                        // Store Supabase UUID - API returns "supabase_user_id"
+                        if let supabaseUserId = userData["supabase_user_id"] as? String {
+                            self?.supabaseUserId = supabaseUserId
+                            UserDefaults.standard.set(supabaseUserId, forKey: "supabaseUserId")
+                            print("✅ Saved supabaseUserId:", supabaseUserId)
+                        } else {
+                            print("❌ supabase_user_id NOT found in response")
+                        }
+                        
+                        if let email = userData["email"] as? String {
+                            self?.userEmail = email
+                            UserDefaults.standard.set(email, forKey: "userEmail")
+                            print("✅ Saved email:", email)
+                        }
+                        
+                        if let name = userData["name"] as? String {
+                            self?.userName = name
+                            UserDefaults.standard.set(name, forKey: "userName")
+                            print("✅ Saved name:", name)
+                        }
+                        
+                        if let hasSubscription = userData["hasSubscription"] as? Bool {
+                            self?.hasSubscription = hasSubscription
+                            UserDefaults.standard.set(hasSubscription, forKey: "hasActiveSubscription")
+                            print("✅ Saved hasSubscription:", hasSubscription)
+                        }
+                        
+                        // Set authenticated
+                        self?.isAuthenticated = true
+                        UserDefaults.standard.set(true, forKey: "isAuthenticated")
+                        print("✅ User authenticated")
+                        
+                        completion(true, nil)
+                        
+                    } else if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                              let error = json["error"] as? String {
+                        completion(false, "Server error: \(error)")
+                    } else {
+                        completion(false, "Unexpected server response")
+                    }
+                } catch {
+                    completion(false, "Failed to parse response: \(error.localizedDescription)")
+                }
+            }
+        }.resume()
+    }
+    
     func setAuthenticated(_ authenticated: Bool) {
         isAuthenticated = authenticated
         UserDefaults.standard.set(authenticated, forKey: "isAuthenticated")
@@ -75,11 +184,16 @@ class AuthManager: NSObject, ObservableObject {
         hasSubscription = false
         userEmail = ""
         userName = ""
+        userId = nil
+        supabaseUserId = nil
         UserDefaults.standard.set(false, forKey: "isAuthenticated")
         UserDefaults.standard.set(false, forKey: "hasActiveSubscription")
         UserDefaults.standard.removeObject(forKey: "appleUserID")
         UserDefaults.standard.removeObject(forKey: "userEmail")
         UserDefaults.standard.removeObject(forKey: "userName")
+        UserDefaults.standard.removeObject(forKey: "userId")
+        UserDefaults.standard.removeObject(forKey: "supabaseUserId")
+        print("✅ User signed out")
     }
     
     func reset() {
@@ -91,6 +205,9 @@ class AuthManager: NSObject, ObservableObject {
         hasSubscription = false
         userEmail = ""
         userName = ""
+        userId = nil
+        supabaseUserId = nil
+        print("✅ App reset")
     }
     
     // MARK: - Helper Methods
@@ -142,23 +259,29 @@ extension AuthManager: ASAuthorizationControllerDelegate {
             UserDefaults.standard.set(userID, forKey: "appleUserID")
             
             // Get user info
-            userEmail = appleIDCredential.email ?? ""
-            userName = appleIDCredential.fullName?.givenName ?? ""
+            let email = appleIDCredential.email ?? ""
+            let name = appleIDCredential.fullName?.givenName ?? ""
             
-            // Store user info
-            UserDefaults.standard.set(userEmail, forKey: "userEmail")
-            UserDefaults.standard.set(userName, forKey: "userName")
-            
-            // Authentication successful
-            isAuthenticated = true
-            UserDefaults.standard.set(true, forKey: "isAuthenticated")
-            hasSubscription = UserDefaults.standard.bool(forKey: "hasActiveSubscription")
+            // Send to API
+            signInWithAPI(appleUserId: userID, email: email, name: name) { [weak self] success, error in
+                if success {
+                    // API sign-in successful - AuthManager already updated
+                    self?.isLoading = false
+                } else {
+                    self?.isLoading = false
+                    self?.errorMessage = error ?? "Failed to sign in"
+                    self?.isAuthenticated = false
+                    UserDefaults.standard.set(false, forKey: "isAuthenticated")
+                }
+            }
         }
     }
     
     func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
         isLoading = false
         errorMessage = error.localizedDescription
+        isAuthenticated = false
+        UserDefaults.standard.set(false, forKey: "isAuthenticated")
     }
 }
 

@@ -41,7 +41,7 @@ struct HomeView: View {
                                 .font(.title)
                                 .bold()
                             
-                            Text("Apple Maps ads for local businesses")
+                            Text("Apple Maps listings for small & local businesses")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         }
@@ -54,7 +54,7 @@ struct HomeView: View {
                             .padding(.horizontal, 32)
                         
                         // Description
-                        Text("Get found when customers search 'near me' on Apple Maps. Run ads, track performance, and grow your business.")
+                        Text("Get found when customers search 'near me' on Apple Maps. Put your business in front of nearby customers ready to buy.")
                             .font(.body)
                             .multilineTextAlignment(.center)
                             .foregroundColor(.secondary)

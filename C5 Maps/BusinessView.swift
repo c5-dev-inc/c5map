@@ -1,12 +1,8 @@
 import SwiftUI
-import StoreKit
 
 struct BusinessView: View {
-    @Environment(\.dismiss) var dismiss
-    @State private var showingRegisterBusiness = false
-    @State private var showingConnectExisting = false
-    @State private var connectedLocations: [MockLocation] = mockLocations
-    @State private var isMenuOpen = false
+    @EnvironmentObject var authManager: AuthManager
+    @State private var showingAddLocation = false
     
     var body: some View {
         ZStack {
@@ -14,271 +10,285 @@ struct BusinessView: View {
                 .ignoresSafeArea()
             
             ScrollView {
-                VStack(spacing: 24) {
-                    // MARK: - Header Section
-                    VStack(spacing: 20) {
-                        VStack(spacing: 12) {
-                            Image(systemName: "building.2.fill")
-                                .font(.system(size: 52))
+                VStack(alignment: .center, spacing: 24) {
+                    
+                    // Header with Building Icon
+                    VStack(alignment: .center, spacing: 12) {
+                        Image(systemName: "building.2.fill")
+                            .font(.system(size: 70))
+                            .foregroundColor(.blue)
+                        
+                        Text("Your Locations")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+                        
+                        Text("Add your business to Apple Maps today and start getting discovered by nearby customers.")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 20)
+                    }
+                    .padding(.top, 40)
+                    
+                    // Add Location Button
+                    Button(action: {
+                        showingAddLocation = true
+                    }) {
+                        HStack {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title3)
+                            Text("Add Your Location")
+                                .fontWeight(.semibold)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.subheadline)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 16)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(14)
+                    }
+                    .padding(.horizontal, 20)
+                    
+                    // Why Add Section with Icons
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "questionmark.circle.fill")
+                                .font(.title3)
                                 .foregroundColor(.blue)
-                            
-                            Text("Your Businesses")
-                                .font(.title2)
+                            Text("Why add your location?")
+                                .font(.headline)
                                 .fontWeight(.bold)
                                 .foregroundColor(.primary)
-                            
-                            Text("Register a new business or connect an existing one to start running ads on Apple Maps.")
-                                .font(.subheadline)
-                                .multilineTextAlignment(.center)
-                                .foregroundColor(.secondary)
-                                .padding(.horizontal, 24)
-                                .fixedSize(horizontal: false, vertical: true)
                         }
-                        .padding(.top, 20)
                         
-                        // Action Cards
-                        VStack(spacing: 16) {
-                            // Register New Business Card
-                            Button(action: { showingRegisterBusiness = true }) {
-                                HStack(spacing: 16) {
-                                    Image(systemName: "plus.circle.fill")
-                                        .font(.system(size: 32))
-                                        .foregroundColor(.blue)
-                                    
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("Register New Business")
-                                            .font(.headline)
-                                            .fontWeight(.semibold)
-                                            .foregroundColor(.primary)
-                                        Text("Add your business to Apple Maps for the first time")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 16)
-                                .background(Color(.systemBackground))
-                                .cornerRadius(16)
-                                .shadow(color: Color(.systemGray4).opacity(0.3), radius: 4, x: 0, y: 2)
-                            }
-                            .buttonStyle(.plain)
-                            
-                            // Connect Existing Business Card
-                            Button(action: { showingConnectExisting = true }) {
-                                HStack(spacing: 16) {
-                                    Image(systemName: "link.circle.fill")
-                                        .font(.system(size: 32))
-                                        .foregroundColor(.green)
-                                    
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("Connect Existing Business")
-                                            .font(.headline)
-                                            .fontWeight(.semibold)
-                                            .foregroundColor(.primary)
-                                        Text("Link your verified Apple Business account")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 16)
-                                .background(Color(.systemBackground))
-                                .cornerRadius(16)
-                                .shadow(color: Color(.systemGray4).opacity(0.3), radius: 4, x: 0, y: 2)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .padding(.horizontal, 16)
-                    }
-                    
-                    // MARK: - Connected Businesses Section
-                    if !connectedLocations.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Connected Businesses")
-                                .font(.headline)
-                                .foregroundColor(.primary)
-                                .padding(.horizontal, 20)
-                            
-                            VStack(spacing: 12) {
-                                ForEach(connectedLocations) { location in
-                                    BusinessLocationCard(location: location)
-                                }
-                            }
-                            .padding(.horizontal, 16)
-                        }
-                    } else {
-                        // Empty State
-                        VStack(spacing: 16) {
-                            Image(systemName: "building.2")
-                                .font(.system(size: 60))
-                                .foregroundColor(.secondary)
-                            
-                            Text("No Connected Businesses")
-                                .font(.headline)
-                                .foregroundColor(.secondary)
-                            
-                            Text("Tap above to register or connect your first business")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 60)
-                        .background(Color(.systemBackground))
-                        .cornerRadius(16)
-                        .padding(.horizontal, 16)
-                    }
-                }
-                .padding(.bottom, 40)
-            }
-            .scrollIndicators(.hidden)
-            
-            // MARK: - Menu Button Overlay
-            VStack {
-                HStack {
-                    Button(action: {
-                        withAnimation(.easeOut(duration: 0.25)) {
-                            isMenuOpen.toggle()
-                        }
-                    }) {
-                        Image(systemName: "line.horizontal.3")
-                            .font(.title2)
-                            .foregroundColor(.blue)
-                            .padding(12)
-                            .background(
-                                Circle()
-                                    .fill(Color(.systemBackground))
-                                    .shadow(color: Color(.systemGray4).opacity(0.3), radius: 4, x: 0, y: 2)
+                        VStack(alignment: .leading, spacing: 16) {
+                            WhyRow(
+                                icon: "iphone.and.arrow.forward",
+                                title: "Get Found",
+                                description: "Customers search 'near me' on Apple Maps every day."
                             )
+                            WhyRow(
+                                icon: "megaphone.fill",
+                                title: "Run Ads",
+                                description: "Promote your business to nearby customers."
+                            )
+                            WhyRow(
+                                icon: "chart.bar.xaxis",
+                                title: "Track Performance",
+                                description: "See how customers find and interact with you."
+                            )
+                            WhyRow(
+                                icon: "photo.fill",
+                                title: "Add Photos",
+                                description: "Showcase your business with high-quality images."
+                            )
+                        }
                     }
-                    .padding(.leading, 16)
-                    .padding(.top, 8)
+                    .padding(.horizontal, 20)
                     
-                    Spacer()
+                    Spacer(minLength: 40)
                 }
-                Spacer()
-            }
-            
-            // MARK: - Menu View
-            MenuView(isMenuOpen: $isMenuOpen) { action in
-                switch action {
-                case .business:
-                    dismiss()
-                case .campaigns:
-                    dismiss()
-                    NotificationCenter.default.post(name: NSNotification.Name("navigateToCampaigns"), object: nil)
-                case .dashboard:
-                    dismiss()
-                    NotificationCenter.default.post(name: NSNotification.Name("navigateToDashboard"), object: nil)
-                case .upgrade:
-                    dismiss()
-                    NotificationCenter.default.post(name: NSNotification.Name("navigateToUpgrade"), object: nil)
-                case .help:
-                    if let url = URL(string: "https://c5-dev.com/maps/support") {
-                        UIApplication.shared.open(url)
-                    }
-                case .contact:
-                    if let url = URL(string: "mailto:support@c5-dev.com") {
-                        UIApplication.shared.open(url)
-                    }
-                case .privacy:
-                    if let url = URL(string: "https://c5-dev.com/maps/privacy") {
-                        UIApplication.shared.open(url)
-                    }
-                case .terms:
-                    if let url = URL(string: "https://c5-dev.com/maps/terms") {
-                        UIApplication.shared.open(url)
-                    }
-                case .rate:
-                    if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-                        SKStoreReviewController.requestReview(in: scene)
-                    }
-                case .signOut:
-                    dismiss()
-                    NotificationCenter.default.post(name: NSNotification.Name("signOut"), object: nil)
-                }
+                .padding(.bottom, 30)
             }
         }
         .navigationBarHidden(true)
-        .sheet(isPresented: $showingRegisterBusiness) {
-            ConnectBusinessView()
-        }
-        .sheet(isPresented: $showingConnectExisting) {
-            ConnectExistingView()
+        .sheet(isPresented: $showingAddLocation) {
+            NavigationStack {
+                AddLocationFlowView()
+                    .environmentObject(authManager)
+            }
         }
     }
 }
 
-// MARK: - Business Location Card
-struct BusinessLocationCard: View {
-    let location: MockLocation
+// MARK: - Why Row Component
+struct WhyRow: View {
+    let icon: String
+    let title: String
+    let description: String
     
     var body: some View {
         HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(location.status == "Connected" ? Color.green.opacity(0.15) : Color.orange.opacity(0.15))
-                    .frame(width: 48, height: 48)
-                
-                Image(systemName: location.status == "Connected" ? "checkmark.circle.fill" : "clock.fill")
-                    .font(.system(size: 24))
-                    .foregroundColor(location.status == "Connected" ? .green : .orange)
-            }
+            // Icon
+            Image(systemName: icon)
+                .font(.system(size: 30))
+                .foregroundColor(.blue)
+                .frame(width: 40, height: 40)
             
-            VStack(alignment: .leading, spacing: 6) {
-                Text(location.name)
-                    .font(.headline)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
                 
-                Text(location.address)
+                Text(description)
                     .font(.caption)
                     .foregroundColor(.secondary)
-                
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(location.status == "Connected" ? Color.green : Color.orange)
-                        .frame(width: 6, height: 6)
-                    Text(location.status)
-                        .font(.caption2)
-                        .foregroundColor(location.status == "Connected" ? .green : .orange)
-                }
+                    .fixedSize(horizontal: false, vertical: true)
             }
             
             Spacer()
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Add Location Flow View
+struct AddLocationFlowView: View {
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var authManager: AuthManager
+    @State private var currentStep = 0
+    @State private var showSuccess = false
+    
+    @State private var displayName = ""
+    @State private var locationName = ""
+    @State private var primaryCategory = ""
+    @State private var status = "Open"
+    @State private var country = "United States"
+    @State private var phoneNumber = ""
+    @State private var website = ""
+    @State private var email = ""  // ✅ NEW
+    @State private var street = ""
+    @State private var unit = ""
+    @State private var city = ""
+    @State private var state = ""
+    @State private var zipCode = ""
+    @State private var hours: [(String, String)] = []
+    @State private var brandWebsite = ""
+    
+    var body: some View {
+        ZStack {
+            Color(.systemGray6)
+                .ignoresSafeArea()
             
-            if location.status == "Pending" {
-                Text("Verify")
-                    .font(.caption2)
-                    .fontWeight(.medium)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.orange.opacity(0.15))
-                    .foregroundColor(.orange)
-                    .cornerRadius(8)
+            VStack(spacing: 0) {
+                HStack {
+                    ForEach(0..<4) { step in
+                        Circle()
+                            .fill(step <= currentStep ? Color.blue : Color(.systemGray4))
+                            .frame(width: 10, height: 10)
+                    }
+                }
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+                
+                Text("Step \(currentStep + 1) of 4")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .padding(.bottom, 12)
+                
+                Group {
+                    switch currentStep {
+                    case 0:
+                        Step1_LocationDetails(
+                            displayName: $displayName,
+                            primaryCategory: $primaryCategory,
+                            status: $status,
+                            phoneNumber: $phoneNumber,
+                            website: $website,
+                            country: $country,
+                            email: $email,  // ✅ NEW
+                            nextAction: {
+                                withAnimation { currentStep += 1 }
+                            }
+                        )
+                    case 1:
+                        Step2_Address(
+                            country: $country,
+                            street: $street,
+                            unit: $unit,
+                            city: $city,
+                            state: $state,
+                            zipCode: $zipCode,
+                            displayName: $displayName,
+                            backAction: {
+                                withAnimation { currentStep -= 1 }
+                            },
+                            nextAction: {
+                                withAnimation { currentStep += 1 }
+                            }
+                        )
+                    case 2:
+                        Step3_Hours(
+                            backAction: {
+                                withAnimation { currentStep -= 1 }
+                            },
+                            nextAction: {
+                                withAnimation { currentStep += 1 }
+                            }
+                        )
+                    case 3:
+                        Step4_Brand(
+                            backAction: {
+                                withAnimation { currentStep -= 1 }
+                            },
+                            submitAction: { submitLocation() },
+                            displayName: displayName,
+                            primaryCategory: primaryCategory,
+                            country: country,
+                            phoneNumber: phoneNumber,
+                            street: street,
+                            city: city,
+                            state: state,
+                            hours: hours,
+                            website: website
+                        )
+                    default:
+                        EmptyView()
+                    }
+                }
+                .transition(.asymmetric(
+                    insertion: .move(edge: .trailing),
+                    removal: .move(edge: .leading)
+                ))
+                .animation(.easeInOut, value: currentStep)
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 14)
-        .background(Color(.systemBackground))
-        .cornerRadius(16)
-        .shadow(color: Color(.systemGray4).opacity(0.3), radius: 4, x: 0, y: 2)
+        .navigationBarHidden(true)
+        .sheet(isPresented: $showSuccess) {
+            Step5_Done(
+                locationName: locationName.isEmpty ? displayName : locationName,
+                address: "\(street), \(city), \(state) \(zipCode), \(country)",
+                displayName: displayName,
+                primaryCategory: primaryCategory,
+                city: city,
+                state: state,
+                country: country,
+                phoneNumber: phoneNumber,
+                email: email,  // ✅ NEW
+                street: street,
+                unit: unit,
+                zipCode: zipCode,
+                website: website,
+                brandWebsite: brandWebsite,
+                hours: hours,
+                onDismiss: {
+                    showSuccess = false
+                    dismiss()
+                }
+            )
+            .environmentObject(authManager)
+        }
+    }
+    
+    private func getCurrentDate() -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter.string(from: Date())
+    }
+    
+    private func submitLocation() {
+        showSuccess = true
     }
 }
 
 // MARK: - Preview
 #Preview {
-    BusinessView()
+    NavigationStack {
+        BusinessView()
+            .environmentObject(AuthManager())
+    }
 }

@@ -6,6 +6,16 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		FD0E81493006BEDD004E8A81 /* StripeTerminal in Frameworks */ = {isa = PBXBuildFile; productRef = FD0E81483006BEDD004E8A81 /* StripeTerminal */; };
+		FD1A148C3001A79C00F17EE9 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = FD1A148B3001A79C00F17EE9 /* Auth */; };
+		FD1A148E3001A79C00F17EE9 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = FD1A148D3001A79C00F17EE9 /* Functions */; };
+		FD1A14903001A79C00F17EE9 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = FD1A148F3001A79C00F17EE9 /* PostgREST */; };
+		FD1A14923001A79C00F17EE9 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = FD1A14913001A79C00F17EE9 /* Realtime */; };
+		FD1A14943001A79C00F17EE9 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = FD1A14933001A79C00F17EE9 /* Storage */; };
+		FD1A14963001A79C00F17EE9 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = FD1A14953001A79C00F17EE9 /* Supabase */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		FDA842192FD7758500BB8D67 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -65,6 +75,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FD1A14903001A79C00F17EE9 /* PostgREST in Frameworks */,
+				FD1A148E3001A79C00F17EE9 /* Functions in Frameworks */,
+				FD1A14963001A79C00F17EE9 /* Supabase in Frameworks */,
+				FD1A148C3001A79C00F17EE9 /* Auth in Frameworks */,
+				FD1A14943001A79C00F17EE9 /* Storage in Frameworks */,
+				FD0E81493006BEDD004E8A81 /* StripeTerminal in Frameworks */,
+				FD1A14923001A79C00F17EE9 /* Realtime in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -125,6 +142,13 @@
 			);
 			name = "C5 Maps";
 			packageProductDependencies = (
+				FD1A148B3001A79C00F17EE9 /* Auth */,
+				FD1A148D3001A79C00F17EE9 /* Functions */,
+				FD1A148F3001A79C00F17EE9 /* PostgREST */,
+				FD1A14913001A79C00F17EE9 /* Realtime */,
+				FD1A14933001A79C00F17EE9 /* Storage */,
+				FD1A14953001A79C00F17EE9 /* Supabase */,
+				FD0E81483006BEDD004E8A81 /* StripeTerminal */,
 			);
 			productName = "C5 Maps";
 			productReference = FDA842072FD7758400BB8D67 /* C5 Maps.app */;
@@ -208,6 +232,10 @@
 			);
 			mainGroup = FDA841FE2FD7758400BB8D67;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				FD1A148A3001A79C00F17EE9 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				FD0E81473006BEDD004E8A81 /* XCRemoteSwiftPackageReference "stripe-terminal-ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = FDA842082FD7758400BB8D67 /* Products */;
 			projectDirPath = "";
@@ -595,6 +623,63 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		FD0E81473006BEDD004E8A81 /* XCRemoteSwiftPackageReference "stripe-terminal-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/stripe/stripe-terminal-ios";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.7.0;
+			};
+		};
+		FD1A148A3001A79C00F17EE9 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		FD0E81483006BEDD004E8A81 /* StripeTerminal */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FD0E81473006BEDD004E8A81 /* XCRemoteSwiftPackageReference "stripe-terminal-ios" */;
+			productName = StripeTerminal;
+		};
+		FD1A148B3001A79C00F17EE9 /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FD1A148A3001A79C00F17EE9 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
+		};
+		FD1A148D3001A79C00F17EE9 /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FD1A148A3001A79C00F17EE9 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Functions;
+		};
+		FD1A148F3001A79C00F17EE9 /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FD1A148A3001A79C00F17EE9 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = PostgREST;
+		};
+		FD1A14913001A79C00F17EE9 /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FD1A148A3001A79C00F17EE9 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Realtime;
+		};
+		FD1A14933001A79C00F17EE9 /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FD1A148A3001A79C00F17EE9 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Storage;
+		};
+		FD1A14953001A79C00F17EE9 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FD1A148A3001A79C00F17EE9 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = FDA841FF2FD7758400BB8D67 /* Project object */;
 }

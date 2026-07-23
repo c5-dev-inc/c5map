@@ -1,7 +1,15 @@
 import SwiftUI
 
 struct NotificationView: View {
-    @State private var notifications: [MockNotification] = mockNotifications
+    @State private var notifications: [MockNotification] = [
+        MockNotification(
+            title: "Branding Profile Status",
+            message: "Check branding profile for your submission status.",
+            timeAgo: "Just now",
+            type: .update,
+            isRead: false
+        )
+    ]
     @State private var selectedFilter: NotificationFilter = .all
     
     enum NotificationFilter: String, CaseIterable {
@@ -282,52 +290,6 @@ enum NotificationType {
     case reminder
     case success
 }
-
-// MARK: - Mock Data
-let mockNotifications: [MockNotification] = [
-    MockNotification(
-        title: "Campaign Performance Update",
-        message: "Your 'Summer Sale' campaign has reached 10,000 impressions with a 5.2% CTR!",
-        timeAgo: "2 min ago",
-        type: .update,
-        isRead: false
-    ),
-    MockNotification(
-        title: "Business Verification Required",
-        message: "Please verify your business information for 'Downtown Bakery' to continue running ads.",
-        timeAgo: "1 hour ago",
-        type: .alert,
-        isRead: false
-    ),
-    MockNotification(
-        title: "New Review Alert",
-        message: "⭐️⭐️⭐️⭐️⭐️ - 'Best coffee in town!' - Sarah J. reviewed your business.",
-        timeAgo: "3 hours ago",
-        type: .success,
-        isRead: true
-    ),
-    MockNotification(
-        title: "Weekly Report Ready",
-        message: "Your weekly ad performance report is now available. View insights and optimize your campaigns.",
-        timeAgo: "1 day ago",
-        type: .update,
-        isRead: true
-    ),
-    MockNotification(
-        title: "Payment Method Expiring",
-        message: "Your credit card on file will expire soon. Please update your payment information.",
-        timeAgo: "2 days ago",
-        type: .alert,
-        isRead: false
-    ),
-    MockNotification(
-        title: "Ad Budget Reminder",
-        message: "Your 'Weekend Special' campaign has reached 80% of its daily budget.",
-        timeAgo: "3 days ago",
-        type: .reminder,
-        isRead: true
-    )
-]
 
 // MARK: - Preview
 #Preview {

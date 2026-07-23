@@ -1,8 +1,17 @@
 import SwiftUI
+import AuthenticationServices
+import WebKit
 
 struct SignInView: View {
+    @EnvironmentObject var authManager: AuthManager
     var onSignIn: () -> Void
     @State private var isLoading = false
+    @State private var showError = false
+    @State private var errorMessage = ""
+    
+    // MARK: - WebView State
+    @State private var showPrivacy = false
+    @State private var showTerms = false
     
     var body: some View {
         ZStack {
@@ -56,25 +65,25 @@ struct SignInView: View {
                     VStack(spacing: 12) {
                         FeatureRow(
                             icon: "building.2.fill",
-                            title: "Add & Claim Your Business on Apple Maps",
+                            title: "Add your Business location on Apple Maps",
                             color: .blue
                         )
                         
                         FeatureRow(
-                            icon: "megaphone.fill",
-                            title: "Run Campaigns & Ads",
+                            icon: "iphone.and.arrow.forward",
+                            title: "Tap to Pay",
                             color: .orange
                         )
                         
                         FeatureRow(
                             icon: "brain.head.profile",
-                            title: "AI-Powered Optimization",
+                            title: "AI-Powered to help your business needs",
                             color: .purple
                         )
                         
                         FeatureRow(
-                            icon: "chart.bar.fill",
-                            title: "Real-time Analytics",
+                            icon: "paintbrush.fill",
+                            title: "Add your brand",
                             color: .teal
                         )
                     }
@@ -84,47 +93,47 @@ struct SignInView: View {
                     
                     // Sign In Button
                     VStack(spacing: 12) {
-                        Button(action: mockSignIn) {
-                            HStack(spacing: 12) {
-                                if isLoading {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                        .scaleEffect(1.0)
-                                } else {
-                                    Image(systemName: "applelogo")
-                                        .font(.title3)
-                                    Text("Continue with Apple")
-                                        .fontWeight(.semibold)
+                        SignInWithAppleButton(
+                            onRequest: { request in
+                                request.requestedScopes = [.fullName, .email]
+                            },
+                            onCompletion: { result in
+                                switch result {
+                                case .success(let authorization):
+                                    handleAppleSignIn(authorization: authorization)
+                                case .failure(let error):
+                                    isLoading = false
+                                    errorMessage = error.localizedDescription
+                                    showError = true
                                 }
                             }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                LinearGradient(
-                                    colors: [Color.black, Color.gray.opacity(0.8)],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
-                            .foregroundColor(.white)
-                            .cornerRadius(16)
-                            .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
-                        }
+                        )
+                        .frame(height: 56)
+                        .cornerRadius(16)
                         .disabled(isLoading)
+                        .opacity(isLoading ? 0.6 : 1.0)
                         
                         // Terms & Privacy Links
                         HStack(spacing: 8) {
-                            Link("Terms of Service", destination: URL(string: "https://c5-dev.com/map/terms")!)
-                                .font(.caption2)
-                                .foregroundColor(.blue)
+                            Button(action: {
+                                showTerms = true
+                            }) {
+                                Text("Terms of Service")
+                                    .font(.caption2)
+                                    .foregroundColor(.blue)
+                            }
                             
                             Text("•")
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
                             
-                            Link("Privacy Policy", destination: URL(string: "https://c5-dev.com/map/privacy")!)
-                                .font(.caption2)
-                                .foregroundColor(.blue)
+                            Button(action: {
+                                showPrivacy = true
+                            }) {
+                                Text("Privacy Policy")
+                                    .font(.caption2)
+                                    .foregroundColor(.blue)
+                            }
                         }
                         
                         Text("By continuing, you agree to our Terms\nand Privacy Policy")
@@ -166,15 +175,126 @@ struct SignInView: View {
                 }
             }
         )
+        .alert("Sign In Error", isPresented: $showError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage)
+        }
+        .sheet(isPresented: $showPrivacy) {
+            WebView(url: URL(string: "https://c5-dev.com/maps/privacy")!)
+        }
+        .sheet(isPresented: $showTerms) {
+            WebView(url: URL(string: "https://c5-dev.com/maps/terms")!)
+        }
     }
     
-    private func mockSignIn() {
+    // MARK: - Handle Apple Sign In
+    private func handleAppleSignIn(authorization: ASAuthorization) {
+        guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential else {
+            isLoading = false
+            errorMessage = "Invalid credential"
+            showError = true
+            return
+        }
+        
         isLoading = true
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+        // Get user info from Apple
+        let appleUserId = appleIDCredential.user
+        let email = appleIDCredential.email ?? ""
+        let name = appleIDCredential.fullName?.givenName ?? ""
+        
+        // Store appleUserId locally
+        UserDefaults.standard.set(appleUserId, forKey: "appleUserID")
+        
+        // Send to your API
+        signInWithAPI(appleUserId: appleUserId, email: email, name: name)
+    }
+    
+    private func signInWithAPI(appleUserId: String, email: String, name: String) {
+        guard let url = URL(string: "https://c5-dev.com/api/map/auth/apple") else {
             isLoading = false
-            onSignIn()
+            errorMessage = "Invalid API URL"
+            showError = true
+            return
         }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body: [String: Any] = [
+            "appleUserId": appleUserId,
+            "email": email,
+            "name": name
+        ]
+        
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        } catch {
+            isLoading = false
+            errorMessage = "Failed to encode request"
+            showError = true
+            return
+        }
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                isLoading = false
+                
+                if let error = error {
+                    errorMessage = "Network error: \(error.localizedDescription)"
+                    showError = true
+                    return
+                }
+                
+                guard let data = data else {
+                    errorMessage = "No data received from server"
+                    showError = true
+                    return
+                }
+                
+                do {
+                    if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                       let success = json["success"] as? Bool,
+                       success == true,
+                       let userData = json["data"] as? [String: Any] {
+                        
+                        // Store user data — NO SUBSCRIPTION CHECK
+                        if let userId = userData["id"] as? Int {
+                            UserDefaults.standard.set(userId, forKey: "userId")
+                            authManager.userId = userId
+                        }
+                        if let email = userData["email"] as? String {
+                            UserDefaults.standard.set(email, forKey: "userEmail")
+                            authManager.userEmail = email
+                        }
+                        if let name = userData["name"] as? String {
+                            UserDefaults.standard.set(name, forKey: "userName")
+                            authManager.userName = name
+                        }
+                        
+                        // ✅ Set authenticated — NO SUBSCRIPTION CHECK
+                        authManager.isAuthenticated = true
+                        UserDefaults.standard.set(true, forKey: "isAuthenticated")
+                        
+                        // ✅ Call onSignIn — goes straight to app
+                        onSignIn()
+                        
+                    } else if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                              let error = json["error"] as? String {
+                        errorMessage = "Server error: \(error)"
+                        showError = true
+                    } else {
+                        errorMessage = "Unexpected server response"
+                        showError = true
+                    }
+                } catch {
+                    errorMessage = "Failed to parse response: \(error.localizedDescription)"
+                    showError = true
+                }
+            }
+        }.resume()
     }
 }
 
@@ -213,4 +333,5 @@ struct FeatureRow: View {
 
 #Preview {
     SignInView(onSignIn: {})
+        .environmentObject(AuthManager())
 }

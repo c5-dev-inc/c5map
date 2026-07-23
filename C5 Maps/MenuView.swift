@@ -1,11 +1,12 @@
 import SwiftUI
 import StoreKit
+import WebKit
 
 // MARK: - Menu Item Type for ContentView Callback
 enum MenuActionType {
-    case business
-    case campaigns
-    case dashboard
+    case locations
+    case branding
+    case tapToPay
     case upgrade
     case help
     case contact
@@ -20,25 +21,32 @@ struct MenuView: View {
     var onMenuAction: ((MenuActionType) -> Void)?
     
     @State private var selectedItem: MenuItemEnum?
+    @State private var showAIAssistant = false
+    @State private var showUpgradeView = false
+    
+    // MARK: - WebView State (EXACTLY like LandingView)
+    @State private var showPrivacy = false
+    @State private var showTerms = false
+    @State private var showHelp = false
     
     enum MenuItemEnum: String, CaseIterable {
-        case business = "Business"
-        case campaigns = "Campaigns"
-        case dashboard = "Dashboard"
+        case locations = "Business Locations"
+        case branding = "Branding Profiles"
+        case tapToPay = "Tap to Pay"
         
         var icon: String {
             switch self {
-            case .business: return "building.2.fill"
-            case .campaigns: return "megaphone.fill"
-            case .dashboard: return "square.grid.2x2.fill"
+            case .locations: return "building.2.fill"
+            case .branding: return "paintbrush.fill"
+            case .tapToPay: return "iphone.and.arrow.forward"
             }
         }
         
         var iconColor: Color {
             switch self {
-            case .business: return .green
-            case .campaigns: return .purple
-            case .dashboard: return .blue
+            case .locations: return .green
+            case .branding: return .purple
+            case .tapToPay: return .blue
             }
         }
     }
@@ -79,7 +87,7 @@ struct MenuView: View {
                     
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 0) {
-                            // MARK: - Main Menu Items (Business, Campaigns, Dashboard)
+                            // MARK: - Main Menu Items (Locations, Branding, Tap to Pay)
                             ForEach(MenuItemEnum.allCases, id: \.self) { item in
                                 MenuRowView(
                                     icon: item.icon,
@@ -93,12 +101,12 @@ struct MenuView: View {
                                         
                                         // Trigger navigation based on selection
                                         switch item {
-                                        case .business:
-                                            onMenuAction?(.business)
-                                        case .campaigns:
-                                            onMenuAction?(.campaigns)
-                                        case .dashboard:
-                                            onMenuAction?(.dashboard)
+                                        case .locations:
+                                            onMenuAction?(.locations)
+                                        case .branding:
+                                            onMenuAction?(.branding)
+                                        case .tapToPay:
+                                            onMenuAction?(.tapToPay)
                                         }
                                     }
                                 }
@@ -123,7 +131,7 @@ struct MenuView: View {
                                     isSelected: false
                                 ) {
                                     isMenuOpen = false
-                                    onMenuAction?(.upgrade)
+                                    showUpgradeView = true
                                 }
                             }
                             .padding(.top, 8)
@@ -140,6 +148,7 @@ struct MenuView: View {
                                     .foregroundColor(.secondary)
                                     .padding(.horizontal, 20)
                                 
+                                // Help Center - Opens WebView (EXACTLY like LandingView)
                                 MenuRowView(
                                     icon: "questionmark.circle.fill",
                                     title: "Help Center",
@@ -147,9 +156,10 @@ struct MenuView: View {
                                     isSelected: false
                                 ) {
                                     isMenuOpen = false
-                                    onMenuAction?(.help)
+                                    showHelp = true  // Using same pattern as LandingView
                                 }
                                 
+                                // Contact Us - Opens AI Assistant Sheet
                                 MenuRowView(
                                     icon: "envelope.fill",
                                     title: "Contact Us",
@@ -157,7 +167,7 @@ struct MenuView: View {
                                     isSelected: false
                                 ) {
                                     isMenuOpen = false
-                                    onMenuAction?(.contact)
+                                    showAIAssistant = true
                                 }
                             }
                             
@@ -173,6 +183,7 @@ struct MenuView: View {
                                     .foregroundColor(.secondary)
                                     .padding(.horizontal, 20)
                                 
+                                // Privacy Policy - Opens WebView (EXACTLY like LandingView)
                                 MenuRowView(
                                     icon: "doc.text.fill",
                                     title: "Privacy Policy",
@@ -180,9 +191,10 @@ struct MenuView: View {
                                     isSelected: false
                                 ) {
                                     isMenuOpen = false
-                                    onMenuAction?(.privacy)
+                                    showPrivacy = true  // Using same pattern as LandingView
                                 }
                                 
+                                // Terms of Service - Opens WebView (EXACTLY like LandingView)
                                 MenuRowView(
                                     icon: "doc.text.fill",
                                     title: "Terms of Service",
@@ -190,7 +202,7 @@ struct MenuView: View {
                                     isSelected: false
                                 ) {
                                     isMenuOpen = false
-                                    onMenuAction?(.terms)
+                                    showTerms = true  // Using same pattern as LandingView
                                 }
                             }
                             
@@ -224,7 +236,7 @@ struct MenuView: View {
                                 
                                 MenuRowView(
                                     icon: "star.circle.fill",
-                                    title: "Rate C5 Maps",
+                                    title: "Rate C5-Maps",
                                     color: .orange,
                                     isSelected: false
                                 ) {
@@ -269,6 +281,22 @@ struct MenuView: View {
             }
         }
         .ignoresSafeArea()
+        // MARK: - WebView Sheets (EXACTLY like LandingView)
+        .sheet(isPresented: $showHelp) {
+            WebView(url: URL(string: "https://c5-dev.com/maps/support")!)
+        }
+        .sheet(isPresented: $showPrivacy) {
+            WebView(url: URL(string: "https://c5-dev.com/maps/privacy")!)
+        }
+        .sheet(isPresented: $showTerms) {
+            WebView(url: URL(string: "https://c5-dev.com/maps/terms")!)
+        }
+        .sheet(isPresented: $showAIAssistant) {
+            AIAssistantView()
+        }
+        .sheet(isPresented: $showUpgradeView) {
+            UpgradePlanView()
+        }
     }
 }
 

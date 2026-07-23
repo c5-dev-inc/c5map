@@ -2,12 +2,14 @@ import SwiftUI
 
 struct AIAssistantView: View {
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var authManager: AuthManager
     @State private var userQuestion = ""
     @State private var messages: [ChatMessage] = [
         ChatMessage(role: "assistant", content: "Hi! I'm your C5 Maps AI assistant. I can help you with:\n\n• Keyword suggestions for your business\n• Bid amount recommendations\n• Budget optimization strategies\n• Apple Maps ad best practices\n\nWhat would you like to know?")
     ]
     @State private var isThinking = false
     @State private var scrollProxy: ScrollViewProxy?
+    @State private var showingUpgrade = false
     @FocusState private var isInputFocused: Bool
     
     private let apiURL = "https://c5-dev.com/api/map"
@@ -18,82 +20,134 @@ struct AIAssistantView: View {
                 Color(.systemGray6)
                     .ignoresSafeArea()
                 
-                VStack(spacing: 0) {
-                    // Header with Navigation Bar (Standard)
-                    VStack(spacing: 8) {
-                        Image(systemName: "bubble.left.and.bubble.right.fill")
-                            .font(.system(size: 36))
-                            .foregroundColor(.blue)
+                // MARK: - Subscription Check
+                if !authManager.hasSubscription {
+                    // Upgrade Required View
+                    VStack(spacing: 24) {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 48))
+                            .foregroundColor(.orange)
                         
-                        Text("AI Assistant")
+                        Text("Upgrade Required")
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.primary)
                         
-                        Text("Powered by DeepSeek AI")
-                            .font(.caption2)
+                        Text("AI Assistant is a premium feature. Upgrade your plan to get AI-powered help for your business.")
+                            .font(.subheadline)
+                            .multilineTextAlignment(.center)
                             .foregroundColor(.secondary)
+                            .padding(.horizontal, 32)
+                        
+                        Button(action: {
+                            showingUpgrade = true
+                        }) {
+                            HStack {
+                                Image(systemName: "crown.fill")
+                                Text("Upgrade Plan")
+                            }
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(14)
+                            .padding(.horizontal, 32)
+                        }
+                        .sheet(isPresented: $showingUpgrade) {
+                            UpgradePlanView(onComplete: {
+                                showingUpgrade = false
+                                authManager.setSubscriptionActive(true)
+                            })
+                            .environmentObject(authManager)
+                        }
                     }
-                    .padding(.vertical, 16)
+                    .padding()
+                    .background(Color(.systemBackground))
+                    .cornerRadius(16)
+                    .shadow(color: Color(.systemGray4).opacity(0.3), radius: 4, x: 0, y: 2)
+                    .padding(.horizontal, 20)
                     
-                    // Messages Area
-                    ScrollViewReader { proxy in
-                        ScrollView {
-                            LazyVStack(alignment: .leading, spacing: 12) {
-                                ForEach(messages) { message in
-                                    MessageBubble(message: message)
-                                        .id(message.id)
-                                }
-                                
-                                if isThinking {
-                                    HStack {
-                                        TypingIndicator()
-                                        Spacer()
+                } else {
+                    // MARK: - Full Content (Active Subscription)
+                    VStack(spacing: 0) {
+                        // Header with Navigation Bar
+                        VStack(spacing: 8) {
+                            Image(systemName: "bubble.left.and.bubble.right.fill")
+                                .font(.system(size: 36))
+                                .foregroundColor(.blue)
+                            
+                            Text("AI Assistant")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.primary)
+                            
+                            Text("Powered by DeepSeek AI")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 16)
+                        
+                        // Messages Area
+                        ScrollViewReader { proxy in
+                            ScrollView {
+                                LazyVStack(alignment: .leading, spacing: 12) {
+                                    ForEach(messages) { message in
+                                        MessageBubble(message: message)
+                                            .id(message.id)
                                     }
-                                    .padding(.horizontal)
-                                    .id("typing")
+                                    
+                                    if isThinking {
+                                        HStack {
+                                            TypingIndicator()
+                                            Spacer()
+                                        }
+                                        .padding(.horizontal)
+                                        .id("typing")
+                                    }
                                 }
+                                .padding()
+                            }
+                            .scrollIndicators(.hidden)
+                            .onAppear {
+                                scrollProxy = proxy
+                            }
+                            .onChange(of: messages.count) { _ in
+                                scrollToBottom()
+                            }
+                            .onChange(of: isThinking) { _ in
+                                scrollToBottom()
+                            }
+                            .onTapGesture {
+                                isInputFocused = false
+                            }
+                        }
+                        
+                        // Input Area
+                        VStack(spacing: 0) {
+                            Divider()
+                            
+                            HStack(spacing: 12) {
+                                TextField("Ask about keywords, bids, or ads...", text: $userQuestion)
+                                    .textFieldStyle(.plain)
+                                    .padding(12)
+                                    .background(Color(.systemGray5))
+                                    .cornerRadius(20)
+                                    .focused($isInputFocused)
+                                    .disabled(isThinking)
+                                
+                                Button(action: sendMessage) {
+                                    Image(systemName: "arrow.up.circle.fill")
+                                        .font(.system(size: 32))
+                                        .foregroundColor(userQuestion.isEmpty || isThinking ? .secondary : .blue)
+                                }
+                                .disabled(userQuestion.isEmpty || isThinking)
                             }
                             .padding()
                         }
-                        .scrollIndicators(.hidden)
-                        .onAppear {
-                            scrollProxy = proxy
-                        }
-                        .onChange(of: messages.count) { _ in
-                            scrollToBottom()
-                        }
-                        .onChange(of: isThinking) { _ in
-                            scrollToBottom()
-                        }
-                        .onTapGesture {
-                            isInputFocused = false
-                        }
+                        .background(Color(.systemBackground))
                     }
-                    
-                    // Input Area
-                    VStack(spacing: 0) {
-                        Divider()
-                        
-                        HStack(spacing: 12) {
-                            TextField("Ask about keywords, bids, or ads...", text: $userQuestion)
-                                .textFieldStyle(.plain)
-                                .padding(12)
-                                .background(Color(.systemGray5))
-                                .cornerRadius(20)
-                                .focused($isInputFocused)
-                                .disabled(isThinking)
-                            
-                            Button(action: sendMessage) {
-                                Image(systemName: "arrow.up.circle.fill")
-                                    .font(.system(size: 32))
-                                    .foregroundColor(userQuestion.isEmpty || isThinking ? .secondary : .blue)
-                            }
-                            .disabled(userQuestion.isEmpty || isThinking)
-                        }
-                        .padding()
-                    }
-                    .background(Color(.systemBackground))
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -278,7 +332,5 @@ struct TypingIndicator: View {
 
 #Preview {
     AIAssistantView()
+        .environmentObject(AuthManager())
 }
-
-
-
